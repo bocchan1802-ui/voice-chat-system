@@ -3,12 +3,14 @@
 import { WebSocketServer } from 'ws';
 import config from '../config/index.js';
 import TTSManager from '../tts/manager.js';
+import STTManager from '../stt/manager.js';
 import XangiBridge from '../xangi/bridge.js';
 
 export class WebSocketHandler {
   constructor(server) {
     this.wss = new WebSocketServer({ server });
     this.tts = new TTSManager();
+    this.stt = new STTManager();
     this.xangi = new XangiBridge();
     this.clients = new Map();
 
@@ -31,6 +33,7 @@ export class WebSocketHandler {
         type: 'connected',
         clientId,
         ttsProvider: config.tts.provider,
+        sttProvider: config.stt.provider,
       });
 
       ws.on('message', async (data) => {
@@ -81,12 +84,17 @@ export class WebSocketHandler {
     client.isProcessing = true;
 
     try {
-      const { audioData } = message;
+      const { audioData, mimeType } = message;
+
+      // Base64をArrayBufferに変換
+      const audioBuffer = this.base64ToArrayBuffer(audioData);
 
       // STT処理
-      const text = await this.transcribe(audioData);
+      console.log('STT processing...');
+      const text = await this.stt.transcribe(audioBuffer, { mimeType });
+      console.log('STT result:', text);
 
-      if (!text) {
+      if (!text || text.length < 2) {
         this.send(client.ws, { type: 'stt_result', text: '' });
         return;
       }
@@ -94,19 +102,18 @@ export class WebSocketHandler {
       this.send(client.ws, { type: 'stt_result', text });
 
       // xangiに送信
-      const xangiMessage = await this.xangi.sendMessage(text);
+      await this.xangi.sendMessage(text);
 
-      // xangiの応答を待機（簡易版：実際は別スレッドで監視）
-      // ここでは即座にTTSを実行（将来的な拡張）
+      // xangiの応答を取得
       const responseText = await this.getXangiResponse(text);
 
       // TTS合成
-      const audioBuffer = await this.tts.synthesize(responseText);
+      const ttsAudioBuffer = await this.tts.synthesize(responseText);
 
       // 音声送信
       this.send(client.ws, {
         type: 'tts_audio',
-        audioData: this.arrayBufferToBase64(audioBuffer),
+        audioData: this.arrayBufferToBase64(ttsAudioBuffer),
         text: responseText,
       });
 
@@ -125,7 +132,7 @@ export class WebSocketHandler {
       // xangiに送信
       await this.xangi.sendMessage(text);
 
-      // 応答生成（簡易版）
+      // 応答生成
       const responseText = await this.getXangiResponse(text);
 
       // TTS合成
@@ -145,27 +152,42 @@ export class WebSocketHandler {
   }
 
   handleConfig(client, message) {
-    const { ttsProvider, sttProvider } = message;
+    const { ttsProvider, sttProvider, voiceSpeed } = message;
 
     if (ttsProvider) {
       this.tts.setProvider(ttsProvider);
-      this.send(client.ws, {
-        type: 'config_updated',
-        ttsProvider,
-      });
     }
+
+    if (sttProvider) {
+      this.stt.setProvider(sttProvider);
+    }
+
+    this.send(client.ws, {
+      type: 'config_updated',
+      ttsProvider: ttsProvider,
+      sttProvider: sttProvider,
+      voiceSpeed,
+    });
   }
 
-  async transcribe(audioData) {
-    // TODO: STT実装
-    // 現在はダミーテキスト
-    return `入力された音声: ${audioData.substring(0, 50)}...`;
-  }
+  async getXangiResponse(userText) {
+    // xangiからの応答を取得
+    // 注: 実際のxangiブリッジが実装されたら置き換え
 
-  async getXangiResponse(text) {
-    // TODO: xangiからの応答取得
-    // 現在はダミーレスポンス
-    return `ぼっちゃんです。${text} ですね！`;
+    // 現在は簡易実装：ローカルで応答生成
+    // 将来的には以下を実装：
+    // 1. Discord APIで最新メッセージをポーリング
+    // 2. ボットの応答を検出
+    // 3. 応答テキストを返す
+
+    const responses = [
+      `「${userText}」ですね、ぼっちゃんです！`,
+      `${userText}、了解しました！`,
+      `ぼっちゃんです。${userText}について何かしましょうか？`,
+      `${userText}ですね！ちょっと待ってくださいね。`,
+    ];
+
+    return responses[Math.floor(Math.random() * responses.length)];
   }
 
   send(ws, data) {
@@ -179,6 +201,15 @@ export class WebSocketHandler {
       type: 'error',
       error,
     });
+  }
+
+  base64ToArrayBuffer(base64) {
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
   }
 
   arrayBufferToBase64(buffer) {
