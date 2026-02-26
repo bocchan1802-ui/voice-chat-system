@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>ぼっちゃんボイス</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- ステータス表示 -->
+    <div class="status-bar">
+      <div class="status-indicator" id="statusIndicator">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">接続中...</span>
+      </div>
+      <div class="latency-display" id="latencyDisplay"></div>
+    </div>
+
+    <!-- メインエリア -->
+    <div class="main-area">
+      <!-- ぼっちゃんキャラクター -->
+      <div class="character">
+        <div class="character-avatar">🎤</div>
+        <div class="character-name">ぼっちゃん</div>
+        <div class="character-status" id="characterStatus">待機中</div>
+      </div>
+
+      <!-- 会話ログ -->
+      <div class="chat-log" id="chatLog">
+        <div class="system-message">
+          ぼっちゃんと話すにはマイクボタンを押してください
+        </div>
+      </div>
+
+      <!-- 現在のテキスト -->
+      <div class="current-text" id="currentText"></div>
+    </div>
+
+    <!-- コントロールエリア -->
+    <div class="control-area">
+      <!-- マイクボタン -->
+      <button class="mic-button" id="micButton">
+        <div class="mic-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+        </div>
+        <div class="mic-ripple" id="micRipple"></div>
+      </button>
+
+      <!-- 設定ボタン -->
+      <button class="settings-button" id="settingsButton">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v6m0 6v6"/>
+          <path d="m4.93 4.93 4.24 4.24m5.66 5.66 4.24 4.24"/>
+          <path d="M1 12h6m6 0h6"/>
+          <path d="m4.93 19.07 4.24-4.24m5.66-5.66 4.24-4.24"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- 設定パネル -->
+    <div class="settings-panel" id="settingsPanel">
+      <div class="settings-header">
+        <h3>設定</h3>
+        <button class="close-button" id="closeSettings">×</button>
+      </div>
+      <div class="settings-content">
+        <div class="setting-item">
+          <label>TTS音声</label>
+          <select id="ttsProvider">
+            <option value="aivis">Aivis Speech (korosuke)</option>
+            <option value="mio">MioTTS (準備中)</option>
+            <option value="qwen">QwenTTS (準備中)</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <label>音声速度</label>
+          <input type="range" id="voiceSpeed" min="0.8" max="1.5" step="0.1" value="1.2">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
