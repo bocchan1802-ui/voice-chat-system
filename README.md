@@ -7,7 +7,7 @@ iPhoneから自宅Mac mini上のxangiとリアルタイム音声会話するシ�
 ```
 iPhone Safari (Tailscaleネットワーク)
     ↓ WS (Tailscale direct connection)
-Mac mini M4 (100.117.13.73:3001)
+Mac mini M4 (Tailscale IP:3001)
     ├─ STT (Gemini Flash / Handy将来対応)
     ├─ xangi Bridge (Discord API)
     └─ TTS (Aivis Speech korosuke)
@@ -18,14 +18,14 @@ Mac mini M4 (100.117.13.73:3001)
 ### 1. サーバー起動
 
 ```bash
-cd /Users/k/github_local/xangi/voice-chat-system/backend
+cd backend
 npm start
 ```
 
 ### 2. iPhoneからアクセス
 
 ```
-http://100.117.13.73:3001
+http://<TAILSCALE_IP>:3001
 ```
 
 ※ Tailscaleが両端末で有効である必要があります
@@ -51,7 +51,7 @@ sudo tailscale up
 
 # IP確認
 tailscale ip -4
-# 出力: 100.117.13.73
+# 出力例: 100.x.x.x
 ```
 
 ### iPhone側
@@ -59,7 +59,7 @@ tailscale ip -4
 1. App Storeで「Tailscale」をインストール
 2. アカウントにログイン
 3. トグルをオンにして有効化
-4. Safariで `http://100.117.13.73:3001` にアクセス
+4. Safariで `http://<TAILSCALE_IP>:3001` にアクセス
 
 ## 🎯 実装済み機能
 
